@@ -24,7 +24,6 @@ defmodule L402.MixProject do
     [
       {:protobuf, "~> 0.12.0"},
       {:grpc, "~> 0.6"}
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end

@@ -9,7 +9,8 @@ defmodule L402.Application do
   def start(_type, _args) do
     children = [
       # Starts a worker by calling: L402.Worker.start_link(arg)
-      # {L402.Worker, arg}
+      {GRPC.Server.Supervisor, endpoint: L402.Endpoint, port: 50051},
+      L402.GRPCChannel
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

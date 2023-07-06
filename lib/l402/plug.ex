@@ -1,4 +1,4 @@
-defmodule L402.Plugs do
+defmodule L402.Plugs.Main do
   @moduledoc """
       Plug to handle an LSAT-compliant authentication flow.
       If no mac, instruct LND to create one.

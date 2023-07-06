@@ -33,7 +33,8 @@ defmodule L402.GRPCChannel do
     def init(_) do
         with {:ok, {host, port, cred}} <- get_config(),
             {:ok, mac} <- get_admin_macaroon() do
-          {:ok, %{admin_mac: mac, host: host, port: port, cred: cred}}
+          state = %{admin_mac: mac, host: host, port: port, cred: cred}
+          {:ok, state, {:continue, nil}}
         else
           error ->
             Logger.error(error)
@@ -42,10 +43,18 @@ defmodule L402.GRPCChannel do
     end
 
     @impl true
-    def handle_call(:connect, _from, %{host: host, port: port, cred: cred} = state) do
-      case GRPC.Stub.connect(host, port, cred: cred, adapter: GRPC.Client.Adapters.Mint, adapter_opts: [http2_opts: %{keepalive: :infinity}]) do
-        {:ok, %GRPC.Channel{} = chan } -> {:reply, :ok, Map.put(state, :channel, chan)}
-        _ -> {:reply, :error, state}
+    def handle_continue(_arg, %{host: host, port: port, cred: cred} = state) do
+      case connect(state) do
+        {:ok, new_state } -> {:noreply, new_state }
+        _ -> {:stop, "could not connect to GRPC Server with provided credentials", state}
+      end
+    end
+
+    @impl true
+    def handle_call(:connect, _from, state) do
+      case connect(state) do
+        {:ok, new_state } -> {:reply, new_state, new_state }
+        _ -> {:stop, "could not connect to GRPC Server with provided credentials", state}
       end
     end
 
@@ -76,11 +85,14 @@ defmodule L402.GRPCChannel do
 
     @impl true
     def handle_info({:elixir_grpc, :connection_down, pid}, state) do
-      Logger.error("GRPC conn down")
-      {:noreply, state}
+      Logger.error("GRPC conn down. Reconnecting...")
+      case connect(state) do
+        {:ok, new_state } -> {:noreply, new_state }
+        _ -> {:stop, "could not connect to GRPC Server with provided credentials", state}
+      end
     end
 
-    @imple true
+    @impl true
     def handle_info({:EXIT, pid, %Mint.TransportError{reason: reason}}, state) do
       Logger.error("Process exited with reason #{reason}")
       {:noreply, state}
@@ -90,6 +102,19 @@ defmodule L402.GRPCChannel do
     def handle_info(msg, state) do
       Logger.info(msg)
       {:noreply, state}
+    end
+
+    def connect(%{host: host, port: port, cred: cred} = state) do
+     case connect!(host, port, cred) do
+        {:ok, %GRPC.Channel{} = chan } ->
+          new_state = Map.put(state, :channel, chan)
+          {:ok, new_state}
+        {:error,  } = err -> err
+      end
+    end
+
+    defp connect!(host, port, cred) do
+      GRPC.Stub.connect(host, port, cred: cred, adapter: GRPC.Client.Adapters.Mint, adapter_opts: [http2_opts: %{keepalive: :infinity}])
     end
 
     def get_config() do
@@ -104,7 +129,7 @@ defmodule L402.GRPCChannel do
       %GRPC.Credential{ssl: [cacertfile: Path.join(:code.priv_dir(:l402), cert_path)]}
     end
 
-    def get_admin_macaroon() do
+    defp get_admin_macaroon() do
       mac = :l402
       |> Application.get_env(:admin_macaroon_path)
       |> read_and_encode()

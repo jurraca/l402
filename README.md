@@ -1,21 +1,3 @@
 # L402
 
-**TODO: Add description**
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `l402` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:l402, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/l402>.
-
+An implementation of the [L402](https://docs.lightning.engineering/the-lightning-network/l402) spec in Elixir.

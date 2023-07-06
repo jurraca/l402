@@ -23,7 +23,8 @@ defmodule L402.MixProject do
   defp deps do
     [
       {:protobuf, "~> 0.12.0"},
-      {:grpc, "~> 0.6"}
+      {:grpc, "~> 0.6"},
+      {:plug_cowboy, "~> 2.6"}
     ]
   end
 end

@@ -23,7 +23,7 @@ defmodule L402.Server do
         value: 10,
         memo: "for access"
       },
-      metadata: [macaroon: admin_mac()]
+      metadata: [macaroon: get_admin_mac()]
     )
   end
 
@@ -33,7 +33,7 @@ defmodule L402.Server do
     Stub.wallet_balance(
       channel,
       %Lnrpc.WalletBalanceRequest{},
-      metadata: [macaroon: admin_mac()]
+      metadata: [macaroon: get_admin_mac()]
     )
   end
 
@@ -48,14 +48,16 @@ defmodule L402.Server do
           }
         ]
       },
-      metadata: [macaroon: admin_mac()]
+      metadata: [macaroon: get_admin_mac()]
     )
   end
 
-  defp admin_mac() do
+  defp get_admin_mac() do
     case GRPCChannel.get(:admin_mac) do
       {:ok, mac} -> mac
       {:error, _} = err -> err
     end
   end
+
+  defp request(fun, channel, mac), do: fun.(channel, mac)
 end

@@ -6,11 +6,8 @@ defmodule L402.GRPCChannel do
       GenServer.start_link(__MODULE__, [], name: __MODULE__)
     end
 
-    def init(_) do
-        with {:ok, %GRPC.Channel{} = channel} <- get_channel(),
-            {:ok, mac} <- get_admin_macaroon() do
-          {:ok, %{admin_mac: mac, channel: channel}}
-        end
+    def connect() do
+      GenServer.call(__MODULE__, :connect)
     end
 
     def get() do
@@ -32,11 +29,32 @@ defmodule L402.GRPCChannel do
     end
 
     # Server
+    @impl true
+    def init(_) do
+        with {:ok, {host, port, cred}} <- get_config(),
+            {:ok, mac} <- get_admin_macaroon() do
+          {:ok, %{admin_mac: mac, host: host, port: port, cred: cred}}
+        else
+          error ->
+            Logger.error(error)
+            {:stop, error}
+        end
+    end
 
+    @impl true
+    def handle_call(:connect, _from, %{host: host, port: port, cred: cred} = state) do
+      case GRPC.Stub.connect(host, port, cred: cred, adapter: GRPC.Client.Adapters.Mint, adapter_opts: [http2_opts: %{keepalive: :infinity}]) do
+        {:ok, %GRPC.Channel{} = chan } -> {:reply, :ok, Map.put(state, :channel, chan)}
+        _ -> {:reply, :error, state}
+      end
+    end
+
+    @impl true
     def handle_call(:get, _from, state) do
       {:reply, state, state}
     end
 
+    @impl true
     def handle_cast(:reset, %{channel: channel}) do
       case GRPC.Stub.disconnect(channel) do
         {:ok, _} -> {:noreply, nil}
@@ -44,34 +62,60 @@ defmodule L402.GRPCChannel do
       end
     end
 
-    def handle_info(msg) do
-      IO.inspect(msg, label: "PID !!")
-    end
-
-    def handle_info(_, state) do
+    @impl true
+    def handle_info({:gun_down, _pid, _protocol, :normal, []}, state) do
+      Logger.error("GRPC conn down via :gun_down")
       {:noreply, state}
     end
 
-    def get_channel() do
+    @impl true
+    def handle_info({:gun_up, _pid, _protocol}, state) do
+      Logger.info("gun_up")
+      {:noreply, state}
+    end
+
+    @impl true
+    def handle_info({:elixir_grpc, :connection_down, pid}, state) do
+      Logger.error("GRPC conn down")
+      {:noreply, state}
+    end
+
+    @imple true
+    def handle_info({:EXIT, pid, %Mint.TransportError{reason: reason}}, state) do
+      Logger.error("Process exited with reason #{reason}")
+      {:noreply, state}
+    end
+
+    @impl true
+    def handle_info(msg, state) do
+      Logger.info(msg)
+      {:noreply, state}
+    end
+
+    def get_config() do
       host = Application.get_env(:grpc, :host)
       port = Application.get_env(:grpc, :port)
-      GRPC.Stub.connect(host, port, cred: build_credentials(), adapter_opts: %{http2_opts: %{keepalive: :infinity}})
+      cred = build_credentials()
+      {:ok, {host, port, cred}}
     end
 
     defp build_credentials() do
       cert_path = Application.get_env(:l402, :cert_path)
-      %GRPC.Credential{ssl: [cacertfile: cert_path]}
+      %GRPC.Credential{ssl: [cacertfile: Path.join(:code.priv_dir(:l402), cert_path)]}
     end
 
-    defp get_admin_macaroon() do
-      {:ok, :lngrpc
+    def get_admin_macaroon() do
+      mac = :l402
       |> Application.get_env(:admin_macaroon_path)
-      |> encode_16()
-    }
+      |> read_and_encode()
+
+      {:ok, mac}
     end
 
-    defp encode_16(macaroon_path) do
-      macaroon_path
+    defp read_and_encode(macaroon_path) do
+      :l402
+      |> :code.priv_dir()
+      |> Path.join(macaroon_path) # join paths to get the app priv directory at runtime
       |> File.read!()
       |> Base.encode16()
     end

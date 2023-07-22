@@ -4,23 +4,11 @@ defmodule L402.Server do
     alias Lnrpc.Lightning.Stub
     alias L402.GRPCChannel
 
-  @doc """
-    Request a macaroon. Pass a GRPC channel and an admin macaroon as credential
-    Returns {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: new_macaroon}}
-  """
-  def bake_macaroon(channel) do
-    case build_macaroon(channel) do
-      {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: mac}} -> mac
-      {:error, _} = err -> err
-      msg -> msg
-    end
-  end
-
-  def create_invoice(channel) do
+  def create_invoice(channel, invoice_amount) do
     Stub.add_invoice(
       channel,
       %Lnrpc.Invoice{
-        value: 10,
+        value: invoice_amount,
         memo: "for access"
       },
       metadata: [macaroon: get_admin_mac()]
@@ -35,6 +23,18 @@ defmodule L402.Server do
       %Lnrpc.WalletBalanceRequest{},
       metadata: [macaroon: get_admin_mac()]
     )
+  end
+
+  @doc """
+    Request a macaroon. Pass a GRPC channel and an admin macaroon as credential
+    Returns {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: new_macaroon}}
+  """
+  def bake_macaroon(channel) do
+    case build_macaroon(channel) do
+      {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: mac}} -> {:ok, mac}
+      {:error, _} = err -> err
+      msg -> msg
+    end
   end
 
   defp build_macaroon(channel) do

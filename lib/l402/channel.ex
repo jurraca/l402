@@ -10,6 +10,10 @@ defmodule L402.GRPCChannel do
       GenServer.call(__MODULE__, :connect)
     end
 
+    def disconnect() do
+      GenServer.cast(__MODULE__, :disconnect)
+    end
+
     def get() do
       GenServer.call(__MODULE__, :get)
     end
@@ -24,17 +28,13 @@ defmodule L402.GRPCChannel do
       {:ok, channel}
     end
 
-    def reset() do
-      GenServer.cast(__MODULE__, :reset)
-    end
-
     # Server
     @impl true
     def init(_) do
         with {:ok, {host, port, cred}} <- get_config(),
             {:ok, mac} <- get_admin_macaroon() do
           state = %{admin_mac: mac, host: host, port: port, cred: cred}
-          {:ok, state, {:continue, nil}}
+          {:ok, state}
         else
           error ->
             Logger.error(error)
@@ -43,7 +43,7 @@ defmodule L402.GRPCChannel do
     end
 
     @impl true
-    def handle_continue(_arg, %{host: host, port: port, cred: cred} = state) do
+    def handle_continue(_arg, %{host: _host, port: _port, cred: _cred} = state) do
       case connect(state) do
         {:ok, new_state } -> {:noreply, new_state }
         _ -> {:stop, "could not connect to GRPC Server with provided credentials", state}
@@ -64,17 +64,26 @@ defmodule L402.GRPCChannel do
     end
 
     @impl true
-    def handle_cast(:reset, %{channel: channel}) do
-      case GRPC.Stub.disconnect(channel) do
-        {:ok, _} -> {:noreply, nil}
-        {:error, _} = err -> err
-      end
+    def handle_cast(:disconnect, %{channel: channel} = state) do
+      {:ok, _} = GRPC.Stub.disconnect(channel)
+      Logger.info("Disconnected channel.")
+      new_state = Map.put(state, :channel, nil)
+      {:noreply, new_state}
+    end
+
+    @impl true
+    def handle_cast(:disconnect, state) do
+      Logger.info("Got disconnect but no channel running.")
+      {:noreply, state}
     end
 
     @impl true
     def handle_info({:gun_down, _pid, _protocol, :normal, []}, state) do
       Logger.error("GRPC conn down via :gun_down")
-      {:noreply, state}
+      case connect(state) do
+        {:ok, new_state } -> {:noreply, new_state }
+        _ -> {:stop, "could not connect to GRPC Server with provided credentials", state}
+      end
     end
 
     @impl true
@@ -84,17 +93,22 @@ defmodule L402.GRPCChannel do
     end
 
     @impl true
-    def handle_info({:elixir_grpc, :connection_down, pid}, state) do
-      Logger.error("GRPC conn down. Reconnecting...")
-      case connect(state) do
-        {:ok, new_state } -> {:noreply, new_state }
-        _ -> {:stop, "could not connect to GRPC Server with provided credentials", state}
-      end
+    def handle_info({:elixir_grpc, :connection_down, _pid}, state) do
+      Logger.error("GRPC conn down. Disconnecting.")
+      GRPC.Stub.disconnect(state.channel)
+      new_state = Map.put(state, :channel, nil)
+      {:noreply, new_state}
     end
 
     @impl true
-    def handle_info({:EXIT, pid, %Mint.TransportError{reason: reason}}, state) do
-      Logger.error("Process exited with reason #{reason}")
+    def handle_info({:EXIT, _pid, %Mint.TransportError{reason: reason}}, state) do
+      Logger.error("GRPC Channel process exited with reason #{reason}")
+      {:noreply, state}
+    end
+
+    @impl true
+    def handle_info({:EXIT, _pid, :normal}, state) do
+      Logger.info("Normal shutdown.")
       {:noreply, state}
     end
 
@@ -107,9 +121,10 @@ defmodule L402.GRPCChannel do
     def connect(%{host: host, port: port, cred: cred} = state) do
      case connect!(host, port, cred) do
         {:ok, %GRPC.Channel{} = chan } ->
+          Logger.info("GRPC Channel connected.")
           new_state = Map.put(state, :channel, chan)
           {:ok, new_state}
-        {:error,  } = err -> err
+        {:error, _} = err -> err
       end
     end
 
@@ -126,7 +141,7 @@ defmodule L402.GRPCChannel do
 
     defp build_credentials() do
       cert_path = Application.get_env(:l402, :cert_path)
-      %GRPC.Credential{ssl: [cacertfile: Path.join(:code.priv_dir(:l402), cert_path)]}
+      GRPC.Credential.new([ssl: [cacertfile: cert_path]])
     end
 
     defp get_admin_macaroon() do
@@ -138,9 +153,7 @@ defmodule L402.GRPCChannel do
     end
 
     defp read_and_encode(macaroon_path) do
-      :l402
-      |> :code.priv_dir()
-      |> Path.join(macaroon_path) # join paths to get the app priv directory at runtime
+      macaroon_path
       |> File.read!()
       |> Base.encode16()
     end

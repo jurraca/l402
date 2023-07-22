@@ -4,6 +4,7 @@ mkShell {
     buildInputs = [
         beam.packages.erlangR24.elixir
         protobuf
+        libsodium
     ];
     shellHook = ''
         mix escript.install hex protobuf

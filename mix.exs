@@ -22,9 +22,13 @@ defmodule L402.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:protobuf, "~> 0.12.0"},
+      #{:protobuf, "~> 0.12.0"},
       {:grpc, "~> 0.6"},
-      {:plug_cowboy, "~> 2.6"}
+      {:plug_cowboy, "~> 2.6"},
+      {:bitcoinex, "~> 0.1.7"},
+      {:macaroon, git: "https://github.com/jurraca/macaroon", branch: "v2"},
+      {:jason, "~> 1.4.1"},
+      {:joken, "~> 2.6.0"}
     ]
   end
 end

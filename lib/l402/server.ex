@@ -25,6 +25,7 @@ defmodule L402.Server do
           {:error, GRPC.RPCError.t()} | {:ok, any} | {:ok, any, map} | GRPC.Client.Stream.t()
   def wallet_balance(channel) do
     {:ok, macaroon} = get_admin_mac()
+
     Stub.wallet_balance(
       channel,
       %Lnrpc.WalletBalanceRequest{},
@@ -46,6 +47,7 @@ defmodule L402.Server do
 
   defp build_macaroon(channel, permissions) do
     {:ok, macaroon} = get_admin_mac()
+
     Stub.bake_macaroon(
       channel,
       %Lnrpc.BakeMacaroonRequest{

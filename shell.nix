@@ -6,9 +6,4 @@ mkShell {
         protobuf
         libsodium
     ];
-    shellHook = ''
-        mix escript.install hex protobuf
-
-        export PATH=~/.mix/escripts:$PATH
-    '';
 }

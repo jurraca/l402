@@ -1,4 +1,10 @@
 defmodule L402.GRPCChannel do
+  @moduledoc """
+    A GenServer which handles the state of our connection the LND node's GRPC server.
+    We connect to the server on when we load the application via the `Mint` adapter.
+    GRPC connections are not meant to be long lived, unless requests are occuring. We don't close the connection eagerly, but we also don't reconnect if the connection closes. When a new request comes in, we reconnect and proceed.
+  """
+
     use GenServer
     require Logger
 
@@ -18,11 +24,6 @@ defmodule L402.GRPCChannel do
       GenServer.call(__MODULE__, :get)
     end
 
-    def get(:admin_mac) do
-      %{admin_mac: mac} = get()
-      {:ok, mac}
-    end
-
     def get(:channel) do
       %{channel: channel} = get()
       {:ok, channel}
@@ -31,10 +32,9 @@ defmodule L402.GRPCChannel do
     # Server
     @impl true
     def init(_) do
-        with {:ok, {host, port, cred}} <- get_config(),
-            {:ok, mac} <- get_admin_macaroon() do
-          state = %{admin_mac: mac, host: host, port: port, cred: cred}
-          {:ok, state}
+        with {:ok, {host, port, cred}} <- get_config() do
+          state = %{host: host, port: port, cred: cred}
+          {:ok, state, {:continue, nil}}
         else
           error ->
             Logger.error(error)
@@ -142,19 +142,5 @@ defmodule L402.GRPCChannel do
     defp build_credentials() do
       cert_path = Application.get_env(:l402, :cert_path)
       GRPC.Credential.new([ssl: [cacertfile: cert_path]])
-    end
-
-    defp get_admin_macaroon() do
-      mac = :l402
-      |> Application.get_env(:admin_macaroon_path)
-      |> read_and_encode()
-
-      {:ok, mac}
-    end
-
-    defp read_and_encode(macaroon_path) do
-      macaroon_path
-      |> File.read!()
-      |> Base.encode16()
     end
 end

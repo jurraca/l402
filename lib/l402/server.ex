@@ -24,7 +24,7 @@ defmodule L402.Server do
   @spec wallet_balance(GRPC.Channel.t()) ::
           {:error, GRPC.RPCError.t()} | {:ok, any} | {:ok, any, map} | GRPC.Client.Stream.t()
   def wallet_balance(channel) do
-    {:ok, macaroon} = get_admin_mac()
+    {:ok, macaroon} = get_admin_macaroon()
 
     Stub.wallet_balance(
       channel,
@@ -38,7 +38,7 @@ defmodule L402.Server do
     Returns {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: new_macaroon}}
   """
   def bake_macaroon(channel, permissions) do
-    case build_macaroon(channel) do
+    case build_macaroon(channel, permissions) do
       {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: mac}} -> {:ok, mac}
       {:error, _} = err -> err
       msg -> msg
@@ -46,7 +46,7 @@ defmodule L402.Server do
   end
 
   defp build_macaroon(channel, permissions) do
-    {:ok, macaroon} = get_admin_mac()
+    {:ok, macaroon} = get_admin_macaroon()
 
     Stub.bake_macaroon(
       channel,

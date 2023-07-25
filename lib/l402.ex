@@ -16,13 +16,14 @@ defmodule L402 do
     `build_challenge/2` is the main entrypoint.
   """
 
+  alias L402.GRPCChannel, as: Channel
+  alias Bitcoinex.LightningNetwork, as: LNUtils
+
   @doc """
     Builds a L402 challenge from an invoice amount and `opts`. See `Lnrpc.Invoice` for a full list of options to pass.
   """
   def build_challenge(invoice_amount, opts \\ []) do
-
-    with {:ok, channel} <- get_channel(),
-      %{payment_request: invoice} <- invoice_request(channel, invoice_amount, opts),
+    with %{payment_request: invoice} <- invoice_request(invoice_amount, opts),
       {:ok, %{payment_hash: payment_hash}} <- LNUtils.decode_invoice(invoice) do
     {:ok, token} = Macaroons.build([caveats: [payment_hash: payment_hash]])
     l402 = "L402 token=" <> token <> " invoice=" <> invoice
@@ -36,8 +37,8 @@ defmodule L402 do
   @doc """
     Request an invoice for the `amount` from a Lightning node connected via the `channel`.
   """
-  def invoice_request(channel, invoice_amount, opts) do
-    case LND.create_invoice(channel, invoice_amount, opts) do
+  def request_invoice(invoice_amount, opts) do
+    case get_channel() |> LND.create_invoice(invoice_amount, opts) do
       {:ok, body = %Lnrpc.AddInvoiceResponse{}} -> body
       {:error, msg} ->
         {:error, "could not fetch invoice from LND"}
@@ -48,6 +49,6 @@ defmodule L402 do
     case Channel.get(:channel) do
       {:ok, nil} -> Channel.connect()
       {:ok, chan} -> {:ok, chan}
-    else
+    end
   end
 end

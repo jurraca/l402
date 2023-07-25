@@ -3,10 +3,8 @@ defmodule L402.Plug do
     A Plug to handle an L402-compliant authentication flow.
   """
   alias Plug.Conn
-  alias L402.GRPCChannel, as: Channel
   alias L402.Server, as: LND
   alias L402.Macaroons
-  alias Bitcoinex.LightningNetwork, as: LNUtils
   require Logger
 
   def init(opts), do: opts

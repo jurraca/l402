@@ -1,6 +1,6 @@
 defmodule L402.Macaroons do
   @moduledoc """
-      Create, decode, and verify macaroons.
+  Create, decode, and verify macaroons.
   """
   alias Macaroon.Serializers.Binary.V2
   alias Macaroon.{Types, Verification}

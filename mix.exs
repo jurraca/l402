@@ -7,8 +7,18 @@ defmodule L402.MixProject do
       version: "0.1.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
-    ]
+      deps: deps(),
+
+      # docs
+      name: "L402",
+      source_url: "https://github.com/jurraca/l402",
+      homepage_url: "http://YOUR_PROJECT_HOMEPAGE",
+      docs: [
+        main: "L402", # The main page in the docs
+        #logo: "path/to/logo.png",
+        extras: ["README.md"]
+      ]
+      ]
   end
 
   # Run "mix help compile.app" to learn about applications.

@@ -1,8 +1,6 @@
 defmodule L402.GRPCChannel do
   @moduledoc """
     A GenServer which handles the state of our connection the LND node's GRPC server.
-    We connect to the server on when we load the application via the `Mint` adapter.
-    GRPC connections are not meant to be long lived, unless requests are occuring. We don't close the connection eagerly, but we also don't reconnect if the connection closes. When a new request comes in, we reconnect and proceed.
   """
 
     use GenServer
@@ -12,6 +10,9 @@ defmodule L402.GRPCChannel do
       GenServer.start_link(__MODULE__, [], name: __MODULE__)
     end
 
+    @doc """
+    GRPC connections are not meant to be long lived, unless requests are occuring. If the connection closes, it is not started again unless `get_channel/0` is called, usually in the process of building a request to the Lightning backend.
+    """
     def connect() do
       GenServer.call(__MODULE__, :connect)
     end
@@ -30,6 +31,10 @@ defmodule L402.GRPCChannel do
     end
 
     # Server
+
+    @doc """
+    The server connects when the application is loaded via the `Mint` adapter.
+    """
     @impl true
     def init(_) do
         with {:ok, {host, port, cred}} <- get_config() do
@@ -132,6 +137,9 @@ defmodule L402.GRPCChannel do
       GRPC.Stub.connect(host, port, cred: cred, adapter: GRPC.Client.Adapters.Mint, adapter_opts: [http2_opts: %{keepalive: :infinity}])
     end
 
+    @doc """
+    Get config values, and build a GRPC credential from the certificate path.
+    """
     def get_config() do
       host = Application.get_env(:grpc, :host)
       port = Application.get_env(:grpc, :port)

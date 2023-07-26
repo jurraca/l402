@@ -53,7 +53,7 @@ defmodule L402.Plug do
       hashed_preimage = :crypto.hash(preimage, :sha256)
 
       case Macaroons.decode(binary_mac) do
-        {:ok, decoded} -> validate_challenge(decoded, hashed_preimage)
+        {:ok, %{payment_hash: payment_hash} = decoded} -> validate_challenge(decoded, payment_hash, hashed_preimage)
         {:error, _} = err -> err
       end
     else
@@ -61,7 +61,7 @@ defmodule L402.Plug do
     end
   end
 
-  defp validate_challenge(%Macaroon{payment_hash: payment_hash, caveats: caveats}, client_hash) do
+  defp validate_challenge(%Macaroon{caveats: caveats}, payment_hash, client_hash) do
     if payment_hash != client_hash do
       {:error, "Preimage doesn't match provided payment hash"}
     else

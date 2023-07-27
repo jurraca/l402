@@ -8,7 +8,7 @@ defmodule L402.Server do
   alias L402.GRPCChannel
 
   def create_invoice(channel, invoice_amount, opts) do
-    expiry = if opts[:expiry], do: opts[:expiry], else: h24()
+    expiry = if opts[:expiry], do: opts[:expiry], else: hours(1)
 
     with invoice <-
            %Lnrpc.Invoice{}
@@ -60,7 +60,7 @@ defmodule L402.Server do
     )
   end
 
-  defp h24(), do: DateTime.to_unix(DateTime.utc_now() + 86400)
+  defp hours(h), do: (h * 3600)
 
   defp get_admin_macaroon() do
     mac =

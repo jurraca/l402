@@ -8,7 +8,6 @@ defmodule L402 do
   alias L402.{Macaroons, Server}
   alias Bitcoinex.LightningNetwork, as: LNUtils
 
-
   require Logger
 
   @doc """
@@ -18,7 +17,7 @@ defmodule L402 do
     with %{payment_request: invoice} <- request_invoice(invoice_amount, opts),
       {:ok, %{payment_hash: payment_hash}} <- LNUtils.decode_invoice(invoice) do
     {:ok, token} = Macaroons.build([caveats: [payment_hash: payment_hash]])
-    l402 = "L402 token=" <> token <> " invoice=" <> invoice
+    l402 = "L402 macaroon=" <> token <> " invoice=" <> invoice
     {:ok, {token, l402}}
     else
         {:error, msg} -> Logger.error(msg)
@@ -29,12 +28,23 @@ defmodule L402 do
   @doc """
     Request an invoice for the `amount` from a Lightning node connected via the `channel`.
   """
-  def request_invoice(invoice_amount, opts) do
-    case get_channel() |> Server.create_invoice(invoice_amount, opts) do
+  def request_invoice(invoice_amount, opts \\ []) do
+    {:ok, channel} = get_channel()
+    case Server.create_invoice(channel, invoice_amount, opts) do
       {:ok, body = %Lnrpc.AddInvoiceResponse{}} -> body
-      {:error, _msg} ->
-        {:error, "could not fetch invoice from LND"}
+      {:error, msg} ->
+        {:error, msg}
     end
+  end
+
+  def parse("L402 " <> rest), do: parse(rest)
+
+  def parse(l402_header) do
+    l402_header
+    |> String.split(":")
+    |> Enum.map(&String.split(&1, "="))
+    |> Enum.map(fn [k, v] -> {k,v} end)
+    |> Enum.into(%{})
   end
 
   defp get_channel() do

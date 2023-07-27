@@ -14,7 +14,10 @@ defmodule L402.GRPCChannel do
     GRPC connections are not meant to be long lived, unless requests are occuring. If the connection closes, it is not started again unless `get_channel/0` is called, usually in the process of building a request to the Lightning backend.
     """
     def connect() do
-      GenServer.call(__MODULE__, :connect)
+      case GenServer.call(__MODULE__, :connect) do
+        %{channel: channel} -> {:ok, channel}
+        err -> err
+      end
     end
 
     def disconnect() do

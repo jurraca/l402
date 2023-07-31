@@ -1,7 +1,6 @@
 defmodule L402 do
   @moduledoc """
-    Minimum public API for services to interact with the protocol.
-    `build_challenge/2` is the main entrypoint.
+    Build, parse, validate an L402-compliant header.
   """
 
   alias L402.GRPCChannel, as: Channel

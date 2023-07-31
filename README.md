@@ -5,8 +5,8 @@ An implementation of the [L402](https://docs.lightning.engineering/the-lightning
 TLDR: We can use Lightning to leverage the `HTTP 402 - Payment Required` status code and finally send micropayments, for any web resource, without a middleman!
 
 The basic idea and buliding blocks:
-  1) there exists a `402 - Payment Required` [status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402)
-  1) we can send decentralized micropayments via Bitcoin's Lightning network
+  1) There exists a `402 - Payment Required` [status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402)
+  1) We can send decentralized micropayments via Bitcoin's Lightning network
   1) [Macaroons](https://research.google/pubs/pub41892/) are cookies which allow us to generate and validate specific conditions for a user's access to a resource, without verifying them via a central server. All that's required is the issuer signing the conditions on the macaroon. It's a bearer token.
 
 Combining these building blocks gets you the L402 standard:

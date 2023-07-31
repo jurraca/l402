@@ -2,16 +2,20 @@
 
 An implementation of the [L402](https://docs.lightning.engineering/the-lightning-network/l402) spec in Elixir.
 
+TLDR: We can use Lightning to leverage the `HTTP 402 - Payment Required` status code and finally send micropayments, for any web resource, without a middleman!
+
 The basic idea and buliding blocks:
   1) there exists a `402 - Payment Required` [status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402)
   1) we can send decentralized micropayments via Bitcoin's Lightning network
-  1) [Macaroons](https://research.google/pubs/pub41892/) are fancy cookies which allow us to generate and validate specific conditions for a user's access to a resource in a decentralized way: all that's required is the issuer signing the conditions on the macaroon. It's a bearer token.
+  1) [Macaroons](https://research.google/pubs/pub41892/) are cookies which allow us to generate and validate specific conditions for a user's access to a resource, without verifying them via a central server. All that's required is the issuer signing the conditions on the macaroon. It's a bearer token.
 
-Combining these building blocks gets you the L402 standard: bearer money + bearer tokens = payments on the web. We can use Lightning to leverage the `HTTP 402 - Payment Required` status code and finally send micropayments, for any web resource, without a middleman!
+Combining these building blocks gets you the L402 standard:
+`bearer money + bearer tokens = payments on the web`.
 
-You will need a LND lightning node. Learn how to get one set up here.
+You will need a LND lightning node. Learn how to get one set up [here](./Lightning.md).
 
-WARNING: barely alpha software, use with mainnet funds at your own peril.
+> #### Warning:
+> Alpha software, use with mainnet funds at your own risk.
 
 ## Usage
 
@@ -33,7 +37,14 @@ Add these to your app's config as follows;
 config :l402,
     admin_macaroon_path: "asdfasdfasdf",
     cert_path: "/path/to/tls.cert"
+```
 
+The GRPC host config defaults to `127.0.0.1:10009`, but you can override it:
+
+```
+config :grpc,
+    host: "MY_HOST",
+    port: 10011
 ```
 
 You can add `L402.Plug` to your router or controllers, since both are plugs already:
@@ -110,8 +121,7 @@ Flow works like this:
 
 ## Architecture and Resources
 
-Three things are needed: Lightning, macaroons, and GRPC. We use GRPC to communicate with our Lightning node.
-The `GRPCChannel` module handles the connection with the Lightning node.
-The `Macaroons` module creates, decodes, and verifies macaroons.
-The `L402.build_challenge/2` function is the main entrypoint.
-
+Three things are needed:[Lightning](https://lightning.network/), [macaroons](https://github.com/lightningnetwork/lnd/blob/master/docs/macaroons.md), and [GRPC](https://grpc.io/). We use GRPC to communicate with our Lightning node.
+- The `GRPCChannel` module handles the connection with the Lightning node.
+- The `Macaroons` module creates, decodes, and verifies macaroons.
+- The `L402.build_challenge/2` function is the main entrypoint, returning an L402 header.

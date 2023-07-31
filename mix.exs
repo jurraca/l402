@@ -15,7 +15,6 @@ defmodule L402.MixProject do
       homepage_url: "https://docs.lightning.engineering/the-lightning-network/l402",
       docs: [
         main: "L402", # The main page in the docs
-        #logo: "path/to/logo.png",
         extras: [ "README.md", "Lightning.md" ]
       ]
       ]

@@ -23,7 +23,7 @@ The L402 workflow is implemented as a Plug.
 
 Add the following to your `deps`:
 ```elixir
-{:l402, "~> 0.0.1"}
+{:l402, "~> 0.1.0"}
 ```
 
 You'll need a working LND node to connect to.

@@ -21,10 +21,11 @@ You will need a LND lightning node. Learn how to get one set up [here](./Lightni
 
 The L402 workflow is implemented as a Plug.
 
-Add the following to your `deps`:
+Once it's in Hex, you will be able to add the following to your `deps`:
 ```elixir
 {:l402, "~> 0.1.0"}
 ```
+(The Macaroons dependency does not support the V2 macaroons format. Once that's merged, we'll be able to add this project to Hex.)
 
 You'll need a working LND node to connect to.
 To configure it, you'll need:

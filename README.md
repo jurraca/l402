@@ -41,7 +41,7 @@ config :l402,
 
 The GRPC host config defaults to `127.0.0.1:10009`, but you can override it:
 
-```
+```elixir
 config :grpc,
     host: "MY_HOST",
     port: 10011
@@ -49,7 +49,7 @@ config :grpc,
 
 You can add `L402.Plug` to your router or controllers, since both are plugs already:
 
-```
+```elixir
 defmodule MyApp.Router do
   use MyAppWeb, :router
 
@@ -76,7 +76,7 @@ end
 ```
 or in a `Controller`:
 
-```
+```elixir
 defmodule MyAppWeb.PaymentController do
   use MyAppWeb, :controller
 
@@ -91,7 +91,7 @@ end
 
 The plug will be invoked before the action is called. However, you can also choose to invoke it in a controller action, for example to fetch payment information for a given resource:
 
-```
+```elixir
 defmodule MyAppWeb.PaymentController do
   use MyAppWeb, :controller
 

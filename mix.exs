@@ -8,13 +8,12 @@ defmodule L402.MixProject do
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-
+      package: package(),
       # docs
       name: "L402",
       description: "Plug-based implementation of the L402 spec.",
       source_url: "https://github.com/jurraca/l402",
       homepage_url: "https://docs.lightning.engineering/the-lightning-network/l402",
-      licenses: ["MIT"],
       docs: [
         # The main page in the docs
         main: "L402",
@@ -43,6 +42,18 @@ defmodule L402.MixProject do
       {:macaroon, git: "https://github.com/jurraca/macaroon", branch: "v2"},
       {:jason, "~> 1.4.1"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false}
+    ]
+  end
+
+  defp package() do
+    [
+      # This option is only needed when you don't want to use the OTP application name
+      name: "L402",
+      # These are the default files included in the package
+      files: ~w(lib priv .formatter.exs mix.exs README* LICENSE*
+                CHANGELOG* changelog* src),
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/jurraca/l402"}
     ]
   end
 end

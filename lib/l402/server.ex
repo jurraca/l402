@@ -40,6 +40,7 @@ defmodule L402.Server do
   """
   def bake_macaroon(channel, permissions) do
     {:ok, macaroon} = get_admin_macaroon()
+
     case build_macaroon(channel, permissions) do
       {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: macaroon}} -> {:ok, macaroon}
       {:error, _} = err -> err
@@ -59,7 +60,7 @@ defmodule L402.Server do
     )
   end
 
-  defp hours(h), do: (h * 3600)
+  defp hours(h), do: h * 3600
 
   defp get_admin_macaroon() do
     mac =

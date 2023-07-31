@@ -16,13 +16,13 @@ defmodule L402 do
   """
   def build_challenge(invoice_amount, opts \\ []) do
     with %{payment_request: invoice} <- request_invoice(invoice_amount, opts),
-      {:ok, %{payment_hash: payment_hash}} <- LNUtils.decode_invoice(invoice) do
-    {:ok, token} = Macaroons.build([caveats: [payment_hash: payment_hash]])
-    l402 = "L402 macaroon=" <> token <> " invoice=" <> invoice
-    {:ok, {token, l402}}
+         {:ok, %{payment_hash: payment_hash}} <- LNUtils.decode_invoice(invoice) do
+      {:ok, token} = Macaroons.build(caveats: [payment_hash: payment_hash])
+      l402 = "L402 macaroon=" <> token <> " invoice=" <> invoice
+      {:ok, {token, l402}}
     else
-        {:error, msg} -> Logger.error(msg)
-        err -> err
+      {:error, msg} -> Logger.error(msg)
+      err -> err
     end
   end
 
@@ -31,8 +31,11 @@ defmodule L402 do
   """
   def request_invoice(invoice_amount, opts \\ []) do
     {:ok, channel} = get_channel()
+
     case Server.create_invoice(channel, invoice_amount, opts) do
-      {:ok, body = %Lnrpc.AddInvoiceResponse{}} -> body
+      {:ok, body = %Lnrpc.AddInvoiceResponse{}} ->
+        body
+
       {:error, msg} ->
         {:error, msg}
     end
@@ -44,11 +47,11 @@ defmodule L402 do
     l402_header
     |> String.split(":")
     |> Enum.map(&String.split(&1, "="))
-    |> Enum.map(fn [k, v] -> {k,v} end)
+    |> Enum.map(fn [k, v] -> {k, v} end)
     |> Enum.into(%{})
   end
 
-    @doc """
+  @doc """
   Parse an L402 header. The macaroon is a base64 encoded bearer token. The preimage is hex-encoded.
   In order for the authorization to be valid, the payment hash included in the macaroon issued by the server must match the sha256 hash of the proof of payment provided by the client.
   """
@@ -60,8 +63,11 @@ defmodule L402 do
       hashed_preimage = :crypto.hash(preimage, :sha256)
 
       case Macaroons.decode(binary_mac) do
-        {:ok, %{payment_hash: payment_hash} = decoded} -> validate_challenge(decoded, payment_hash, hashed_preimage)
-        {:error, _} = err -> err
+        {:ok, %{payment_hash: payment_hash} = decoded} ->
+          validate_challenge(decoded, payment_hash, hashed_preimage)
+
+        {:error, _} = err ->
+          err
       end
     else
       _err -> {:error, "Wrong format for L402 header, got #{rest}"}
@@ -70,7 +76,7 @@ defmodule L402 do
 
   def valid_preimage?(preimage, invoice) do
     with {:ok, %{payment_hash: payment_hash}} <- LNUtils.decode_invoice(invoice),
-          hashed_preimage <- :crypto.hash(preimage, :sha256) do
+         hashed_preimage <- :crypto.hash(preimage, :sha256) do
       payment_hash == hashed_preimage
     end
   end

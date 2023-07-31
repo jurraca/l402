@@ -14,10 +14,11 @@ defmodule L402.MixProject do
       source_url: "https://github.com/jurraca/l402",
       homepage_url: "https://docs.lightning.engineering/the-lightning-network/l402",
       docs: [
-        main: "L402", # The main page in the docs
-        extras: [ "README.md", "Lightning.md" ]
+        # The main page in the docs
+        main: "L402",
+        extras: ["README.md", "Lightning.md"]
       ]
-      ]
+    ]
   end
 
   # Run "mix help compile.app" to learn about applications.
@@ -35,6 +36,8 @@ defmodule L402.MixProject do
       {:grpc, "~> 0.6"},
       {:plug_cowboy, "~> 2.6"},
       {:bitcoinex, "~> 0.1.7"},
+      # we need macaroons v2, but the library does not support it yet.
+      # PR here: https://github.com/doawoo/macaroon/pull/3
       {:macaroon, git: "https://github.com/jurraca/macaroon", branch: "v2"},
       {:jason, "~> 1.4.1"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false}

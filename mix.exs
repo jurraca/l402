@@ -16,7 +16,7 @@ defmodule L402.MixProject do
       docs: [
         main: "L402", # The main page in the docs
         #logo: "path/to/logo.png",
-        extras: [ "README.md", "lightning.md" ]
+        extras: [ "README.md", "Lightning.md" ]
       ]
       ]
   end

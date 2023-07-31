@@ -39,8 +39,9 @@ defmodule L402.Server do
     Returns {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: new_macaroon}}
   """
   def bake_macaroon(channel, permissions) do
+    {:ok, macaroon} = get_admin_macaroon()
     case build_macaroon(channel, permissions) do
-      {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: mac}} -> {:ok, mac}
+      {:ok, %Lnrpc.BakeMacaroonResponse{macaroon: macaroon}} -> {:ok, macaroon}
       {:error, _} = err -> err
       msg -> msg
     end

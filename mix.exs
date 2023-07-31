@@ -11,7 +11,7 @@ defmodule L402.MixProject do
 
       # docs
       name: "L402",
-      description: "The L402 spec implemented for Elixir.",
+      description: "Plug-based implementation of the L402 spec.",
       source_url: "https://github.com/jurraca/l402",
       homepage_url: "https://docs.lightning.engineering/the-lightning-network/l402",
       licenses: ["MIT"],

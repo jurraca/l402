@@ -45,9 +45,11 @@ defmodule L402 do
 
   def parse(l402_header) do
     l402_header
-    |> String.split(":")
-    |> Enum.map(&String.split(&1, "="))
-    |> Enum.map(fn [k, v] -> {k, v} end)
+    |> String.split()
+    |> Enum.map(fn str ->
+      [k, v] = String.split(str, "=")
+      {k, v}
+      end)
     |> Enum.into(%{})
   end
 
@@ -76,7 +78,7 @@ defmodule L402 do
 
   def valid_preimage?(preimage, invoice) do
     with {:ok, %{payment_hash: payment_hash}} <- LNUtils.decode_invoice(invoice),
-         hashed_preimage <- :crypto.hash(preimage, :sha256) do
+         hashed_preimage <- :crypto.hash(:sha256, preimage) do
       payment_hash == hashed_preimage
     end
   end

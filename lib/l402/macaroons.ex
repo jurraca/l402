@@ -21,9 +21,9 @@ defmodule L402.Macaroons do
   end
 
   def get_payment_hash_from_macaroon(mac) when is_map(mac) do
-    case mac |> Map.get(:caveats) |> ph_in_caveats() do
+    case mac |> Map.get(:caveats) |> payment_hash_from_caveats() do
       nil -> {:error, "No payment hash found in caveats"}
-      ph -> ph |> String.split("=") |> Enum.at(-1)
+      hash -> hash |> String.split("=") |> Enum.at(-1)
     end
   end
 
@@ -32,8 +32,8 @@ defmodule L402.Macaroons do
     get_payment_hash_from_macaroon(decoded)
   end
 
-  def verify_caveats(macaroon, payment_hash) do
-    case decoded = decode(macaroon) do
+  def verify_caveats(macaroon, payment_hash) when is_map(macaroon) do
+    case decode(macaroon) do
       {:ok, %{caveats: caveats}} ->
         verify_payment_hash(caveats, payment_hash)
 
@@ -46,17 +46,17 @@ defmodule L402.Macaroons do
   end
 
   def verify_payment_hash(caveats, challenge_hash) do
-    ph = ph_in_caveats(caveats)
+    ph = payment_hash_from_caveats(caveats)
 
     if ph do
       "payment_hash = " <> hash = ph
-      {:ok, challenge_hash == ph}
+      {:ok, challenge_hash == hash}
     else
       {:error, "No payment hash found in Macaroon caveats"}
     end
   end
 
-  defp ph_in_caveats(caveats) do
+  defp payment_hash_from_caveats(caveats) do
     case Enum.filter(caveats, fn cav ->
            cav
            |> Map.values()
@@ -75,7 +75,8 @@ defmodule L402.Macaroons do
 
   defp append_caveats(mac, [{k, v} | tail]) do
     stringified = Atom.to_string(k) <> " = " <> v
-    updated_mac = Macaroon.add_first_party_caveat(mac, stringified)
-    append_caveats(updated_mac, tail)
+    mac
+    |> Macaroon.add_first_party_caveat(stringified)
+    |> append_caveats(tail)
   end
 end

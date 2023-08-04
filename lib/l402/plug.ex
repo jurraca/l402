@@ -11,7 +11,7 @@ defmodule L402.Plug do
 
   def init(opts), do: opts
 
-  def call(%Plug.Conn{req_headers: [{"authorization", "L402 " <> auth}]} = conn, _opts) do
+  def call(%Conn{req_headers: [{"authorization", "L402 " <> auth}]} = conn, _opts) do
     case L402.validate_402(auth) do
       {:ok, _} ->
         Conn.put_status(conn, 200)
@@ -22,7 +22,7 @@ defmodule L402.Plug do
   end
 
   # If the conn has an amount but no authorization, return a 402 with challenge.
-  def call(%Plug.Conn{assigns: %{amount: amount}} = conn, _opts) do
+  def call(%Conn{assigns: %{amount: amount}} = conn, _opts) do
     case L402.build_challenge(amount) do
       {:ok, {_token, l402}} ->
         conn
@@ -30,7 +30,7 @@ defmodule L402.Plug do
         |> Conn.put_status(:payment_required)
 
       {:error, _} ->
-        Conn.put_status(conn, :service_unavaible)
+        Conn.put_status(conn, :service_unavailable)
     end
   end
 

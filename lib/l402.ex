@@ -53,6 +53,10 @@ defmodule L402 do
     |> Enum.into(%{})
   end
 
+  def format(macaroon, preimage) do
+    "L402 " <> macaroon <> ":" <> preimage
+  end
+
   @doc """
   Parse an L402 header. The macaroon is a base64 encoded bearer token. The preimage is hex-encoded.
   In order for the authorization to be valid, the payment hash included in the macaroon issued by the server must match the sha256 hash of the proof of payment provided by the client.

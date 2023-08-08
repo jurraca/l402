@@ -6,11 +6,15 @@ defmodule L402.Plug do
     If no authorization header is found, a 402 response is returned with a macaroon and a Lightning invoice.
     The plug expects an "amount" in the assigns, as issuing a payment invoice would not be possible without it. You should set this value in your controller or router.
   """
+  @behaviour Plug
+
   alias Plug.Conn
   require Logger
 
+  @impl Plug
   def init(opts), do: opts
 
+  @impl Plug
   def call(%Conn{req_headers: [{"authorization", "L402 " <> auth}]} = conn, _opts) do
     case L402.validate_402(auth) do
       {:ok, _} ->
@@ -22,6 +26,7 @@ defmodule L402.Plug do
   end
 
   # If the conn has an amount but no authorization, return a 402 with challenge.
+  @impl Plug
   def call(%Conn{assigns: %{amount: amount}} = conn, _opts) do
     case L402.build_challenge(amount) do
       {:ok, {_token, l402}} ->
@@ -35,6 +40,7 @@ defmodule L402.Plug do
   end
 
   # The upstream pipeline must provide an amount to build a challenge from.
+  @impl Plug
   def call(conn, _opts) do
     Conn.put_status(conn, :bad_request)
   end
